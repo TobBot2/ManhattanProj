@@ -2,18 +2,46 @@ import board
 import neopixel
 import digitalio
 
-# Update this to match the number of NeoPixel LEDs connected to your board.
-num_pixels = 8
+@dataclass
+Class Led:
+    index: number
+    x: number
+    y: number
 
+# NEOPIXEL SETUP
+num_pixels = 8
 pixels = neopixel.NeoPixel(board.GP0, num_pixels)
 pixels.brightness = 0.2
 hue = 0
 
+# BUTTON SETUP
 button = digitalio.DigitalInOut(board.GP2)
 button.direction = digitalio.Direction.INPUT
 button.pull = digitalio.Pull.UP
 button_state = False
 
+"""
+LED DATA STRUCTURE
+
+the list 'leds' is a list where the index corresponds to the led's
+index in the 'pixels' variable from the neopixel library.
+Additionally,
+
+"""
+
+lines: List[List[number]] = [
+    # example lines for now. String of the led indexes
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,51,52,53,54,55,56,57,58,59,60,61,62,233,234,235] # 123 line
+    [31,32,33,34,35,36,37,38,9,10,11,12,13,14,15,16,17,18,19,20,51,52,53,54,55,56,57,58,59,60,61,62,233,234,235] # 456 line
+]
+
+# each element in the list is a subway line containing a list of LEDs
+leds: List[Led] = [
+    [],
+]
+
+def linearize(led1: Led, led2: Led):
+    pass
 
 def hsv_to_rgb(h, s, v):
     hh = None
