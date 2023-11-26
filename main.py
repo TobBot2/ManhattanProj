@@ -20,6 +20,13 @@ class SortedLed:
     led: Led
     weight: float
 
+@dataclass
+class SortedLedList:
+    mode: str
+    max_weight: float
+    current_index: int = -1
+    led_list: List[SortedLed]
+
 class Mode(Enum):
     WHITE = 1
     RED = 2
@@ -43,6 +50,18 @@ class Speed(Enum):
     SLOW = 3
     SLOW_X = 4
 
+class Train:
+    current_Led: Led
+    direction: bool # true is positive direction, false is negative
+    """ Trains will run down a line based on current_led's next index. 
+        If there are multiple, it creates a duplicate train. If there
+        are none, it dies (or maybe respowns at a random line again) """
+
+# GLOBAL VARIABLES
+timer = 0
+rate = 1
+sorted_leds: SortedLedList = []
+
 # NEOPIXEL SETUP
 num_pixels = 8
 pixels = neopixel.NeoPixel(board.GP0, num_pixels)
@@ -55,6 +74,13 @@ mode_btn.direction = digitalio.Direction.INPUT
 mode_btn.pull = digitalio.Pull.UP
 mode_btn_state = False
 mode: Mode = Mode.WHITE
+
+# SPEED BUTTON SETUP
+speed_btn = digitalio.DigitalInOut(board.GP3)
+speed_btn.direction = digitalio.Direction.INPUT
+speed_btn.pull = digitalio.Pull.UP
+speed_brn_state = False
+speed: Speed = Speed.NORMAL
 
 """ *******************
 ****** LED LINES ******
@@ -91,6 +117,10 @@ lines: Dict[str, List[Led]] = {
     "456": line_456
 }
 
+
+# making functions that return sorted lists
+# is silly because I'll have to loop through
+# all leds anyway to decrease 'power' value.
 def sort_by_x() -> List[SortedLed]:
     sorted_leds: List[SortedLed] = []
     for i in range(lines.count):
@@ -163,9 +193,42 @@ def handle_mode_switch():
         print("mode = ", mode)
     mode_btn_state = button_pressed
 
+def handle_speed_switch():
+    button_pressed = speed_btn.value
+    if button_pressed != speed_btn_state and button_pressed:
+        speed = (speed + 1) % len(Speed) # loop through speed
+        print("speed = ", speed)
+    speed_btn_state = button_pressed
+
+def increase_timer():
+    if speed == Speed.NORMAL:
+        timer += rate
+    elif speed == Speed.FAST:
+        timer += rate * 2
+    elif speed == Speed.SLOW:
+        timer += rate / 2
+    elif speed == Speed.SLOW_X:
+        timer += rate / 4
+
+
+def wash_effect_x(t: float):
+    # make sure the sorted_leds are sorted by the correct value
+    if sorted_leds.mode != "x":
+        sorted_leds.mode = "x"
+        sorted_leds.led_list = sort_by_x()
+        sorted_leds.current_index = 0
+
+    if sorted_leds.led_list[sorted_leds.current_index].weight < t % sorted_leds.max_weight:
+        sorted_leds.led_list[sorted_leds.current_index].led.powered = 3
+        sorted_leds.current_index = (sorted_leds.current_index + 1) % len(sorted_leds.led_list)
+    
+
 
 while True:
     handle_mode_switch()
+    handle_speed_switch()
+
+    increase_timer()
 
     hue += 2
     for i in range(len(pixels)):
