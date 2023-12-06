@@ -6,6 +6,10 @@ from dataclasses import dataclass
 from typing import List, Dict
 from enum import Enum
 
+"""
+    Make sure led's can be counted as a part of multiple lines.
+"""
+
 @dataclass
 class Led: # first three args required on init
     x: float
